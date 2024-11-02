@@ -3,35 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Предсказание времени прибытия</title>
-    <script src="https://mapgl.2gis.com/api/js/v1"></script>
+    <title>2GIS API Request</title>
 </head>
 <body>
-    <h1>Предсказание времени прибытия автобусов</h1>
-    
-    <form id="arrival-prediction-form">
-        <label for="stop_id">ID остановки:</label>
-        <input type="number" id="stop_id" required>
-        <button type="submit">Предсказать время прибытия</button>
-    </form>
-
-    <h2>Результаты:</h2>
-    <div id="result"></div>
-
     <script>
-        document.getElementById('arrival-prediction-form').addEventListener('submit', function(event) {
-            event.preventDefault(); // Предотвращаем перезагрузку страницы
+        const url = 'http://routing.api.2gis.com/routing/7.0.0/global?key=90908d6d-9b1a-4234-b726-7f8c651e5374';
 
-            const stopId = document.getElementById('stop_id').value;
+        const data = {
+            points: [
+                { type: "stop", lon: 37.582591, lat: 55.775364 },
+                { type: "stop", lon: 37.579206, lat: 55.774362 }
+            ],
+            locale: "ru",
+            transport: "car",
+            route_mode: "fastest",
+            traffic_mode: "jam"
+        };
 
-            // Запрос на предсказание времени прибытия
-            fetch(`/api/predict_arrival?stop_id=${stopId}`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('result').innerText = `Предсказанное время прибытия: ${data.arrival_time}`;
-                })
-                .catch(error => console.error('Ошибка:', error));
-        });
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Сеть не отвечает: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => console.log("Response JSON:", data))
+        .catch(error => console.error("Ошибка:", error));
     </script>
 </body>
 </html>

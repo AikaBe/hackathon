@@ -1,32 +1,44 @@
 from flask import Flask, jsonify, request
 import pandas as pd
-from sklearn.linear_model import LinearRegression
 import numpy as np
+from geopy.distance import geodesic
 
 app = Flask(__name__)
 
 # Загрузка данных о автобусных остановках
-data = pd.read_csv('bus_stops.csv')  # Замените на путь к вашим данным
+data = pd.read_csv('bus_stops.csv', names=['stop_id', 'latitude', 'longitude'])
 
-# Здесь вы должны подготовить и обучить вашу модель
-# Пример простой модели
-model = LinearRegression()
-# Предполагая, что у вас есть необходимые данные для обучения
-# X = features, y = target (время прибытия)
-X = data[['stop_id']]  # замените на ваши реальные признаки
-y = data['arrival_time']  # замените на ваши реальные метки
-model.fit(X, y)
+approx_time_between_stops = 5  # примерное фиксированное время между остановками
 
-@app.route('/api/bus_stops', methods=['GET'])
-def get_bus_stops():
-    stops = data.to_dict(orient='records')
-    return jsonify(stops)
+def find_nearest_stop(user_location):
+    distances = data.apply(
+        lambda row: geodesic(user_location, (row['latitude'], row['longitude'])).meters, axis=1
+    )
+    nearest_stop_index = distances.idxmin()
+    return data.iloc[nearest_stop_index]
 
 @app.route('/api/predict_arrival', methods=['GET'])
 def predict_arrival():
     stop_id = request.args.get('stop_id', type=int)
-    prediction = model.predict(np.array([[stop_id]]))  # Пример предсказания
-    return jsonify({'arrival_time': prediction[0]})
+
+    if stop_id is None:
+        return jsonify({'error': 'Параметр stop_id обязателен'}), 400
+
+    # Находим остановку по ID
+    stop_data = data[data['stop_id'] == stop_id]
+
+    if stop_data.empty:
+        return jsonify({'error': 'Остановка не найдена'}), 404
+
+    # Оценка времени прибытия
+    # Здесь вы можете добавить свою логику для расчета времени прибытия
+    estimated_arrival_time = approx_time_between_stops
+
+    return jsonify({
+        'stop_id': stop_id,
+        'arrival_time_estimate': estimated_arrival_time
+    })
+
 
 if __name__ == '__main__':
     app.run(debug=True)
