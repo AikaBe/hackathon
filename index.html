@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Предсказание времени прибытия</title>
+    <script src="https://mapgl.2gis.com/api/js/v1"></script>
+</head>
+<body>
+    <h1>Предсказание времени прибытия автобусов</h1>
+    
+    <form id="arrival-prediction-form">
+        <label for="stop_id">ID остановки:</label>
+        <input type="number" id="stop_id" required>
+        <button type="submit">Предсказать время прибытия</button>
+    </form>
+
+    <h2>Результаты:</h2>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('arrival-prediction-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Предотвращаем перезагрузку страницы
+
+            const stopId = document.getElementById('stop_id').value;
+
+            // Запрос на предсказание времени прибытия
+            fetch(`/api/predict_arrival?stop_id=${stopId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').innerText = `Предсказанное время прибытия: ${data.arrival_time}`;
+                })
+                .catch(error => console.error('Ошибка:', error));
+        });
+    </script>
+</body>
+</html>
